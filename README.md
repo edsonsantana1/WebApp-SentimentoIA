@@ -38,9 +38,9 @@ Crie o arquivo `backend/.env` na raiz do diretório `backend`, baseado no `backe
 MONGODB_URI=
 DATABASE_NAME=sentimento_db
 
-GROK_API_KEY=
-GROK_API_URL=https://openrouter.ai/api/v1
-GROK_MODEL=deepseek/deepseek-chat-v3-0324:free
+OPENROUTER_API_KEY=
+OPENROUTER_API_URL=https://openrouter.ai/api/v1
+OPENROUTER_MODEL=google/gemma-3-27b-it:free
 
 OLLAMA_ENABLED=False
 OLLAMA_BASE_URL=http://localhost:11434

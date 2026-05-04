@@ -10,6 +10,7 @@ export default function SearchPage() {
   const [brandName, setBrandName] = useState("");
   const [selectedSources, setSelectedSources] = useState<string[]>(["google", "reddit"]);
   const [locality, setLocality] = useState("");
+  const [periodDays, setPeriodDays] = useState(30);
   const [loading, setLoading] = useState(false);
   const [lastResult, setLastResult] = useState<any>(null);
 
@@ -20,29 +21,35 @@ export default function SearchPage() {
   ];
 
   const toggleSource = (sourceId: string) => {
-    setSelectedSources(prev =>
+    setSelectedSources((prev) =>
       prev.includes(sourceId)
-        ? prev.filter(id => id !== sourceId)
+        ? prev.filter((id) => id !== sourceId)
         : [...prev, sourceId]
     );
   };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (selectedSources.length === 0) {
+      alert("Selecione pelo menos uma fonte para iniciar a busca.");
+      return;
+    }
+
     setLoading(true);
-    
+
     try {
       const result = await sentimentApi.search({
         brand_name: brandName,
         sources: selectedSources,
-        period_days: 30,
+        period_days: periodDays,
         locality: locality || undefined,
       });
       setLastResult(result);
       if ((result.total ?? result.mentions?.length ?? 0) > 0) {
         setLocation("/dashboard");
       } else {
-        alert("Busca concluída, mas nenhuma fonte retornou dados. Verifique Google Places, Reddit ou X/snscrape.");
+        alert("Busca concluida, mas nenhuma fonte retornou dados. Verifique Google Places, Reddit ou X/snscrape.");
       }
     } catch (err) {
       console.error("Erro na busca", err);
@@ -83,7 +90,6 @@ export default function SearchPage() {
           <p className="text-gray-400 mb-12">Pesquise sua marca em multiplas fontes e colete mencoes para analise</p>
 
           <form onSubmit={handleSearch} className="space-y-8">
-            {/* Brand Name */}
             <div className="cyber-card p-8">
               <div className="hud-corner hud-corner-tl"></div>
               <div className="hud-corner hud-corner-tr"></div>
@@ -96,26 +102,18 @@ export default function SearchPage() {
                 <input
                   type="text"
                   value={brandName}
-                  onChange={(e) => setBrandName(e.target.value)}
+                  onChange={(event) => setBrandName(event.target.value)}
                   placeholder="Digite o nome da marca..."
                   className="w-full pl-10 pr-4 py-3 bg-black border-2 border-cyan-400 text-pink-500 placeholder-gray-600 focus:outline-none focus:border-pink-500 text-lg"
                   disabled={loading}
                   required
                 />
               </div>
-              <label className="block text-sm font-bold neon-cyan mb-4 mt-6">LOCALIDADE (OPCIONAL)</label>
-              <input
-                type="text"
-                value={locality}
-                onChange={(e) => setLocality(e.target.value)}
-                placeholder="Ex: São Paulo, Recife, Rio de Janeiro..."
-                className="w-full px-4 py-3 bg-black border-2 border-cyan-400 text-pink-500 placeholder-gray-600 focus:outline-none focus:border-pink-500 text-lg"
-                disabled={loading}
-              />
-              <p className="text-xs text-gray-500 mt-3">A busca usa APIs reais via Apify. Se uma fonte não retornar dados, nada mockado será criado.</p>
+              <p className="text-xs text-gray-500 mt-3">
+                A busca usa integracoes reais: Google Places, Reddit publico e X/snscrape quando habilitado. Se uma fonte nao retornar dados, nada mockado sera criado.
+              </p>
             </div>
 
-            {/* Sources Selection */}
             <div className="cyber-card p-8">
               <div className="hud-corner hud-corner-tl"></div>
               <div className="hud-corner hud-corner-tr"></div>
@@ -124,7 +122,7 @@ export default function SearchPage() {
 
               <label className="block text-sm font-bold neon-cyan mb-6">SELECIONE AS FONTES</label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {sources.map(source => (
+                {sources.map((source) => (
                   <button
                     key={source.id}
                     type="button"
@@ -143,7 +141,6 @@ export default function SearchPage() {
               </div>
             </div>
 
-            {/* Filters */}
             <div className="cyber-card p-8">
               <div className="hud-corner hud-corner-tl"></div>
               <div className="hud-corner hud-corner-tr"></div>
@@ -152,27 +149,22 @@ export default function SearchPage() {
 
               <label className="block text-sm font-bold neon-cyan mb-6 flex items-center gap-2">
                 <Filter size={18} />
-                FILTROS AVANCADOS
+                PARAMETROS DA BUSCA
               </label>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-xs text-gray-400 mb-2">PERIODO</label>
-                  <select className="w-full px-3 py-2 bg-black border-2 border-cyan-400 text-cyan-400 focus:outline-none focus:border-pink-500">
-                    <option>Ultimos 7 dias</option>
-                    <option>Ultimos 30 dias</option>
-                    <option>Ultimos 90 dias</option>
-                    <option>Ultimo ano</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs text-gray-400 mb-2">SENTIMENTO</label>
-                  <select className="w-full px-3 py-2 bg-black border-2 border-cyan-400 text-cyan-400 focus:outline-none focus:border-pink-500">
-                    <option>Todos</option>
-                    <option>Positivo</option>
-                    <option>Neutro</option>
-                    <option>Negativo</option>
+                  <select
+                    value={periodDays}
+                    onChange={(event) => setPeriodDays(Number(event.target.value))}
+                    className="w-full px-3 py-2 bg-black border-2 border-cyan-400 text-cyan-400 focus:outline-none focus:border-pink-500"
+                    disabled={loading}
+                  >
+                    <option value={7}>Ultimos 7 dias</option>
+                    <option value={30}>Ultimos 30 dias</option>
+                    <option value={90}>Ultimos 90 dias</option>
+                    <option value={365}>Ultimo ano</option>
                   </select>
                 </div>
 
@@ -180,26 +172,19 @@ export default function SearchPage() {
                   <label className="block text-xs text-gray-400 mb-2">LOCALIDADE</label>
                   <input
                     type="text"
+                    value={locality}
+                    onChange={(event) => setLocality(event.target.value)}
                     placeholder="Ex: Brasil, Sao Paulo"
                     className="w-full px-3 py-2 bg-black border-2 border-cyan-400 text-cyan-400 placeholder-gray-600 focus:outline-none focus:border-pink-500"
+                    disabled={loading}
                   />
-                </div>
-
-                <div>
-                  <label className="block text-xs text-gray-400 mb-2">CRITICIDADE MINIMA</label>
-                  <select className="w-full px-3 py-2 bg-black border-2 border-cyan-400 text-cyan-400 focus:outline-none focus:border-pink-500">
-                    <option>Todas</option>
-                    <option>Alta</option>
-                    <option>Media</option>
-                    <option>Baixa</option>
-                  </select>
                 </div>
               </div>
             </div>
 
             {lastResult && (
               <div className="cyber-card p-6">
-                <h3 className="text-lg font-bold neon-cyan mb-3">RESULTADO DA ÚLTIMA BUSCA</h3>
+                <h3 className="text-lg font-bold neon-cyan mb-3">RESULTADO DA ULTIMA BUSCA</h3>
                 <p className="text-gray-300">Encontradas: {lastResult.total ?? lastResult.mentions?.length ?? 0}</p>
                 {lastResult.llm_analysis?.error && <p className="text-yellow-400 mt-2">LLM: {lastResult.llm_analysis.error}</p>}
                 {lastResult?.errors?.length > 0 && (
@@ -214,10 +199,9 @@ export default function SearchPage() {
               </div>
             )}
 
-            {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading || !brandName}
+              disabled={loading || !brandName || selectedSources.length === 0}
               className="cyber-button w-full py-4 text-lg flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <Zap size={20} />

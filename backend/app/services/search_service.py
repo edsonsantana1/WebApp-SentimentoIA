@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 from app.config import settings
@@ -84,8 +84,17 @@ class SearchService:
 
         enriched_mentions: list[dict[str, Any]] = []
         seen = set()
+        cutoff = now - timedelta(days=max(1, int(period_days)))
 
         for mention in collected:
+            published_at = mention.get("published_at")
+            if isinstance(published_at, datetime):
+                if published_at.tzinfo is None:
+                    published_at = published_at.replace(tzinfo=cutoff.tzinfo)
+                    mention["published_at"] = published_at
+                if published_at < cutoff:
+                    continue
+
             # Deduplicação simples por fonte + texto + autor.
             fingerprint = (
                 mention.get("source"),
